@@ -18,15 +18,97 @@ class _EditScreenState extends State<EditScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isInitialized) {
-      // Extract the course object passed through the named route arguments
-      course = ModalRoute.of(context)!.settings.arguments as Course;
-      // Load assignments associated with this specific course ID
-      Provider.of<CourseProvider>(
-        context,
-        listen: false,
-      ).loadAssignments(course.id!);
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Course) {
+        course = args;
+        // Load assignments associated with this specific course ID
+        Provider.of<CourseProvider>(
+          context,
+          listen: false,
+        ).loadAssignments(course.id!);
+      }
       _isInitialized = true;
     }
+  }
+
+  // Dialog to edit Course Name and Code
+  void _showEditCourseDialog(BuildContext context, CourseProvider courseProvider) {
+    final nameController = TextEditingController(text: course.name);
+    final codeController = TextEditingController(text: course.code);
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Edit Course', style: TextStyle(color: Colors.white)),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: nameController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Course Name',
+                  prefixIcon: Icon(Icons.book_outlined, color: Colors.white54),
+                ),
+                validator: (val) =>
+                    val == null || val.trim().isEmpty ? 'Please enter a name' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: codeController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Course Code',
+                  prefixIcon: Icon(Icons.code_outlined, color: Colors.white54),
+                ),
+                validator: (val) =>
+                    val == null || val.trim().isEmpty ? 'Please enter a code' : null,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.black,
+            ),
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                final newName = nameController.text.trim();
+                final newCode = codeController.text.trim();
+
+                await courseProvider.updateCourse(
+                  course.id!,
+                  newName,
+                  newCode,
+                );
+
+                setState(() {
+                  course = Course(
+                    id: course.id,
+                    name: newName,
+                    code: newCode,
+                  );
+                });
+
+                if (ctx.mounted) Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -42,6 +124,13 @@ class _EditScreenState extends State<EditScreen> {
           course.name,
           style: Theme.of(context).textTheme.headlineMedium,
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, color: Colors.orange),
+            tooltip: 'Edit Course Details',
+            onPressed: () => _showEditCourseDialog(context, courseProvider),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -123,7 +212,6 @@ class _EditScreenState extends State<EditScreen> {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               onChanged: (bool? value) {
-                                // Toggle complete status (U in CRUD)
                                 courseProvider.toggleAssignmentStatus(
                                   assignment,
                                 );
@@ -156,7 +244,6 @@ class _EditScreenState extends State<EditScreen> {
                               ),
                               tooltip: 'Delete Assignment',
                               onPressed: () {
-                                // Delete assignment entry (D in CRUD)
                                 courseProvider.removeAssignment(
                                   assignment.id!,
                                   course.id!,
