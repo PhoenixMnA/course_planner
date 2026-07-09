@@ -26,7 +26,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     bool success = await authProvider.handleSignUp(
       _emailController.text.trim(),
@@ -37,7 +37,10 @@ class _SignupScreenState extends State<SignupScreen> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sign up successful! Please log in.')),
+        const SnackBar(
+          content: Text('Sign up successful! Please log in.'),
+          backgroundColor: Colors.orange,
+        ),
       );
       Navigator.pushReplacementNamed(context, '/login');
     }
@@ -46,39 +49,102 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Account')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) => value == null || !value.contains('@') ? 'Enter a valid email' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
-                obscureText: true,
-                validator: (value) => value == null || value.length < 6 ? 'Password must be at least 6 characters' : null,
-              ),
-              const SizedBox(height: 24),
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: _submit,
-                      child: const Text('Sign Up'),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 28.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Centered Header
+                  Text(
+                    'Create Account',
+                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                          color: Colors.orange,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Email Input
+                  TextFormField(
+                    controller: _emailController,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      prefixIcon: Icon(Icons.email_outlined, color: Colors.white54),
                     ),
-              TextButton(
-                onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
-                child: const Text('Already have an account? Log In'),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) =>
+                        value == null || !value.contains('@') ? 'Enter a valid email' : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Password Input
+                  TextFormField(
+                    controller: _passwordController,
+                    decoration: const InputDecoration(
+                      labelText: 'Password',
+                      prefixIcon: Icon(Icons.lock_outline, color: Colors.white54),
+                    ),
+                    obscureText: true,
+                    validator: (value) => value == null || value.length < 6
+                        ? 'Password must be at least 6 characters'
+                        : null,
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Submit Button or Loading Indicator
+                  _isLoading
+                      ? const CircularProgressIndicator(color: Colors.orange)
+                      : SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: _submit,
+                            child: const Text(
+                              'Sign Up',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                  const SizedBox(height: 24),
+
+                  // Log In Link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Already have an account? ",
+                        style: TextStyle(color: Colors.white60),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pushReplacementNamed(context, '/login'),
+                        child: const Text(
+                          'Log In',
+                          style: TextStyle(
+                            color: Colors.orange,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

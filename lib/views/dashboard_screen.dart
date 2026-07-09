@@ -15,7 +15,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    // Fix: Wait for the structural frame mount layout, then guard using mounted context
+    // Wait for frame mount, then load courses safely
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         Provider.of<CourseProvider>(context, listen: false).loadCourses();
@@ -25,16 +25,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildSkeletonLoader() {
     return ListView.builder(
-      padding: const EdgeInsets.all(12.0),
+      padding: const EdgeInsets.all(16.0),
       itemCount: 4,
       itemBuilder: (context, index) {
-        // CHANGED: Wrapped the Card inside Shimmer.fromColors to enable the animation
         return Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
+          baseColor: const Color(0xFF2A2A2A),
+          highlightColor: const Color(0xFF3D3D3D),
           child: Card(
-            elevation: 1,
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            margin: const EdgeInsets.only(bottom: 12.0),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
@@ -66,13 +64,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Container(
                     width: 24, 
                     height: 24, 
-                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                    decoration: const BoxDecoration(
+                      color: Colors.white, 
+                      shape: BoxShape.circle,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Container(
                     width: 24, 
                     height: 24, 
-                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                    decoration: const BoxDecoration(
+                      color: Colors.white, 
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ],
               ),
@@ -90,13 +94,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Course Planner'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'My Course Planner',
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, color: Colors.white70),
             tooltip: 'Log Out',
             onPressed: () async {
-              // Fix: Cache the context's navigator helper before executing logout async calls
               final navigator = Navigator.of(context);
               await authProvider.handleLogOut();
               navigator.pushReplacementNamed('/login');
@@ -107,40 +115,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: courseProvider.isLoading
           ? _buildSkeletonLoader()
           : courseProvider.courses.isEmpty
-              ? const Center(
-                  child: Text(
-                    'No courses added yet.\nTap the + button to create one!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.school_outlined, size: 64, color: Colors.white24),
+                      SizedBox(height: 16),
+                      Text(
+                        'No courses added yet.\nTap the + button to create one!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16, color: Colors.white38),
+                      ),
+                    ],
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(16.0),
                   itemCount: courseProvider.courses.length,
                   itemBuilder: (context, index) {
                     final course = courseProvider.courses[index];
                     return Card(
-                      elevation: 3,
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
+                      margin: const EdgeInsets.only(bottom: 12.0),
                       child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
                         title: Text(
                           course.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        subtitle: Text(course.code),
+                        subtitle: Text(
+                          course.code,
+                          style: const TextStyle(color: Colors.orangeAccent),
+                        ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.arrow_forward_ios, color: Colors.indigo),
+                              icon: const Icon(Icons.edit_outlined, color: Colors.orange),
+                              tooltip: 'Edit Course',
                               onPressed: () {
                                 Navigator.pushNamed(context, '/edit', arguments: course);
                               },
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.redAccent),
+                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                              tooltip: 'Delete Course',
                               onPressed: () {
-                                courseProvider.removeCourse(course.id!);
+                                if (course.id != null) {
+                                  courseProvider.removeCourse(course.id!);
+                                }
                               },
                             ),
                           ],
@@ -150,10 +175,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                 ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.black,
         onPressed: () {
           Navigator.pushNamed(context, '/add');
         },
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, size: 28),
       ),
     );
   }

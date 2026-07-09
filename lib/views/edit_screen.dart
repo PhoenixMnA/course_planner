@@ -21,7 +21,10 @@ class _EditScreenState extends State<EditScreen> {
       // Extract the course object passed through the named route arguments
       course = ModalRoute.of(context)!.settings.arguments as Course;
       // Load assignments associated with this specific course ID
-      Provider.of<CourseProvider>(context, listen: false).loadAssignments(course.id!);
+      Provider.of<CourseProvider>(
+        context,
+        listen: false,
+      ).loadAssignments(course.id!);
       _isInitialized = true;
     }
   }
@@ -33,56 +36,131 @@ class _EditScreenState extends State<EditScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(course.name),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          course.name,
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Course Code: ${course.code}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.grey),
+            // Course Code Badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+              ),
+              child: Text(
+                'Course Code: ${course.code}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+              ),
             ),
-            const Divider(height: 32),
+            const SizedBox(height: 24),
             const Text(
               'Assignments & Deadlines',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 12),
             Expanded(
               child: assignments.isEmpty
-                  ? const Center(
-                      child: Text('No assignments tracked for this course yet.'),
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(
+                            Icons.assignment_turned_in_outlined,
+                            size: 56,
+                            color: Colors.white24,
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            'No assignments tracked for this course yet.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.white38,
+                            ),
+                          ),
+                        ],
+                      ),
                     )
                   : ListView.builder(
                       itemCount: assignments.length,
                       itemBuilder: (context, index) {
                         final assignment = assignments[index];
+                        final isDone = assignment.isCompleted == 1;
+
                         return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 6.0),
+                          margin: const EdgeInsets.only(bottom: 10.0),
                           child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 4.0,
+                            ),
                             leading: Checkbox(
-                              value: assignment.isCompleted == 1,
+                              value: isDone,
+                              activeColor: Colors.orange,
+                              checkColor: Colors.black,
+                              side: const BorderSide(
+                                color: Colors.white54,
+                                width: 1.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
                               onChanged: (bool? value) {
                                 // Toggle complete status (U in CRUD)
-                                courseProvider.toggleAssignmentStatus(assignment);
+                                courseProvider.toggleAssignmentStatus(
+                                  assignment,
+                                );
                               },
                             ),
                             title: Text(
                               assignment.title,
                               style: TextStyle(
-                                decoration: assignment.isCompleted == 1
+                                fontWeight: FontWeight.w600,
+                                color: isDone ? Colors.white38 : Colors.white,
+                                decoration: isDone
                                     ? TextDecoration.lineThrough
                                     : TextDecoration.none,
+                                decorationColor: Colors.white38,
                               ),
                             ),
-                            subtitle: Text('Due: ${assignment.deadline}'),
+                            subtitle: Text(
+                              'Due: ${assignment.deadline}',
+                              style: TextStyle(
+                                color: isDone
+                                    ? Colors.white24
+                                    : Colors.orangeAccent,
+                                fontSize: 13,
+                              ),
+                            ),
                             trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.red),
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
+                              ),
+                              tooltip: 'Delete Assignment',
                               onPressed: () {
                                 // Delete assignment entry (D in CRUD)
-                                courseProvider.removeAssignment(assignment.id!, course.id!);
+                                courseProvider.removeAssignment(
+                                  assignment.id!,
+                                  course.id!,
+                                );
                               },
                             ),
                           ),

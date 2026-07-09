@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/course.dart';
 import '../models/assignment.dart';
-// Fix: Using an absolute package path prevents pathing compilation errors
-// Change this line:
 import 'package:course_planner/services/db_helper.dart';
+
 class CourseProvider with ChangeNotifier {
   List<Course> _courses = [];
   final Map<int, List<Assignment>> _assignmentsByCourse = {};
@@ -41,6 +40,13 @@ class CourseProvider with ChangeNotifier {
     await loadCourses();
   }
 
+  // UPDATE Course (U in CRUD)
+  Future<void> updateCourse(int id, String name, String code) async {
+    final updatedCourse = Course(id: id, name: name, code: code);
+    await DBHelper.instance.updateCourse(updatedCourse);
+    await loadCourses();
+  }
+
   // DELETE Course (D in CRUD)
   Future<void> removeCourse(int id) async {
     await DBHelper.instance.deleteCourse(id);
@@ -70,9 +76,14 @@ class CourseProvider with ChangeNotifier {
     await loadAssignments(courseId);
   }
 
-  // UPDATE Assignment (U in CRUD)
+  // UPDATE Assignment Details (U in CRUD)
+  Future<void> updateAssignment(Assignment assignment) async {
+    await DBHelper.instance.updateAssignment(assignment);
+    await loadAssignments(assignment.courseId);
+  }
+
+  // UPDATE Assignment Status (U in CRUD)
   Future<void> toggleAssignmentStatus(Assignment assignment) async {
-    // Fix: Created a new instance object copy instead of mutating a final property
     final updatedAssignment = Assignment(
       id: assignment.id,
       courseId: assignment.courseId,
